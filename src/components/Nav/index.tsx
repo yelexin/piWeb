@@ -14,7 +14,7 @@ function Nav() {
 
   return (
     <nav>
-      <img className="project-name" src="/house.png" onClick={goHome}></img>
+      <img className="project-name" src="/house.png" onClick={goHome} alt="Home"></img>
       <span className="project-name" onClick={goHome}>
         Home Control
       </span>
