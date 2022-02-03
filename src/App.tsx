@@ -1,25 +1,41 @@
-import React from 'react';
-import logo from './logo.svg';
+import React, { useEffect, useState } from 'react';
+import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import { checkSession } from './apis/login';
+import { getUserById } from './apis/user';
 import './App.css';
+import Nav from './components/Nav';
+import { ICurUser } from './interfaces/login';
+import Home from './Pages/Home';
+import V2ray from './Pages/V2ray';
+
+export const UserContext = React.createContext<ICurUser>({ id: null, avatar: null, email: null });
 
 function App() {
+  const [curUser, setCurUser] = useState<ICurUser>({ id: null, avatar: null, email: null });
+  useEffect(() => {
+    (async () => {
+      const res = await checkSession();
+      if (res.data.code === 200) {
+        if (res.data.data.id) {
+          const userResp = await getUserById(res.data.data.id);
+          const { id, avatar, email } = userResp.data.data;
+          setCurUser({ id, avatar, email });
+        }
+      }
+    })();
+  }, []);
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <BrowserRouter>
+      <UserContext.Provider value={curUser}>
+        <div className="home">
+          <Nav />
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/v2ray" element={<V2ray />} />
+          </Routes>
+        </div>
+      </UserContext.Provider>
+    </BrowserRouter>
   );
 }
 
