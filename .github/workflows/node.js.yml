@@ -1,0 +1,43 @@
+# This workflow will do a clean installation of node dependencies, cache/restore them, build the source code and run tests across different versions of node
+# For more information see: https://help.github.com/actions/language-and-framework-guides/using-nodejs-with-github-actions
+
+name: Node.js CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [16.x]
+        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
+    env:
+      PI_SSH_KEY: ${{ secrets.PI_SSH_KEY }}
+    steps:
+      - uses: actions/checkout@v2
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v2
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "npm"
+      - run: |
+          npm install
+          npm run build
+          tar zcvf dist.tar.gz -C build .
+      - name: Install SSH key
+        uses: shimataro/ssh-key-action@v2
+        with:
+          key: ${{ secrets.PI_SSH_KEY }}
+          name: pi # optional
+          known_hosts: ${{ secrets.PI_SSH_KNOWN_HOST }}
+          config: ${{ secrets.PI_SSH_CONFIG }} # ssh_config; optional
+          if_key_exists: fail # replace / ignore / fail; optional (defaults to fail)
+      - run: "scp -P 10010 dist.tar.gz pi:~/apps/"
+      # - run: "scp -P 10010 package.json pi:~/apps/piServer/dist"
+      - run: ssh -p 10010 pi "cd ~/apps && rm -rf webpage && mkdir webpage && cd webpage && mv ~/apps/dist.tar.gz . && tar zxvf dist.tar.gz && rm -rf dist.tar.gz"
