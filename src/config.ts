@@ -1,3 +1,3 @@
 export const config = {
-  serverOrigin: 'http://localhost:3000'
+  serverOrigin: 'http://pi.yelexin.cn:3000'
 }
